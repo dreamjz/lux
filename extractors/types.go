@@ -27,7 +27,7 @@ type Stream struct { // 视频流
 	// the file extension after video parts merged
 	Ext string `json:"ext"` // 合并后的 扩展名
 	// if the parts need mux
-	NeedMux bool // 是否需要 锁
+	NeedMux bool
 }
 
 // DataType indicates the type of extracted data, eg: video or image.
@@ -50,7 +50,7 @@ type Data struct {
 	Title string   `json:"title"` // 资源 名称
 	Type  DataType `json:"type"`  // 资源 类型
 	// each stream has it's own Parts and Quality
-	Streams map[string]*Stream `json:"streams"`
+	Streams map[string]*Stream `json:"streams"` // 资源的实际信息
 	// danmaku, subtitles, etc
 	Captions map[string]*CaptionPart `json:"caption"`
 	// Err is used to record whether an error occurred when extracting the list data

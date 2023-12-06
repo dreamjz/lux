@@ -25,19 +25,19 @@ import (
 
 // Options defines options used in downloading.
 type Options struct {
-	InfoOnly       bool
-	Silent         bool
-	Stream         string
+	InfoOnly       bool   // 只打印信息
+	Silent         bool   // 不打印信息
+	Stream         string // 指定 stream format
 	Refer          string
 	OutputPath     string
 	OutputName     string
 	FileNameLength int
-	Caption        bool
+	Caption        bool // 下载字幕
 
 	MultiThread  bool
 	ThreadNumber int
 	RetryTimes   int
-	ChunkSizeMB  int
+	ChunkSizeMB  int // 分块大小
 	// Aria2
 	UseAria2RPC bool
 	Aria2Token  string
@@ -134,19 +134,19 @@ func (downloader *Downloader) save(part *extractors.Part, refer, fileName string
 		return nil
 	}
 
-	tempFilePath := filePath + ".download"
+	tempFilePath := filePath + ".download" // 临时文件
 	tempFileSize, _, err := utils.FileSize(tempFilePath)
 	if err != nil {
 		return err
 	}
 	headers := map[string]string{
-		"Referer": refer,
+		"Referer": refer, // 资源 URL
 	}
 	var (
 		file      *os.File
 		fileError error
 	)
-	if tempFileSize > 0 {
+	if tempFileSize > 0 { // 临时文件已存在
 		// range start from 0, 0-1023 means the first 1024 bytes of the file
 		headers["Range"] = fmt.Sprintf("bytes=%d-", tempFileSize)
 		file, fileError = os.OpenFile(tempFilePath, os.O_APPEND|os.O_WRONLY, 0644)
@@ -168,16 +168,16 @@ func (downloader *Downloader) save(part *extractors.Part, refer, fileName string
 		}
 	}()
 
-	if downloader.option.ChunkSizeMB > 0 {
+	if downloader.option.ChunkSizeMB > 0 { // 指定了分块大小
 		var start, end, chunkSize int64
-		chunkSize = int64(downloader.option.ChunkSizeMB) * 1024 * 1024
+		chunkSize = int64(downloader.option.ChunkSizeMB) * 1024 * 1024 // MiB
 		remainingSize := part.Size
-		if tempFileSize > 0 {
+		if tempFileSize > 0 { // 跳过已存在的内容
 			start = tempFileSize
 			remainingSize -= tempFileSize
 		}
-		chunk := remainingSize / chunkSize
-		if remainingSize%chunkSize != 0 {
+		chunk := remainingSize / chunkSize // 分块
+		if remainingSize%chunkSize != 0 {  // 至少 1
 			chunk++
 		}
 		var i int64 = 1
@@ -186,7 +186,7 @@ func (downloader *Downloader) save(part *extractors.Part, refer, fileName string
 			headers["Range"] = fmt.Sprintf("bytes=%d-%d", start, end)
 			temp := start
 			for i := 0; ; i++ {
-				written, err := downloader.writeFile(part.URL, file, headers)
+				written, err := downloader.writeFile(part.URL, file, headers) // 下载
 				if err == nil {
 					break
 				} else if i+1 >= downloader.option.RetryTimes {
@@ -201,7 +201,7 @@ func (downloader *Downloader) save(part *extractors.Part, refer, fileName string
 	} else {
 		temp := tempFileSize
 		for i := 0; ; i++ {
-			written, err := downloader.writeFile(part.URL, file, headers)
+			written, err := downloader.writeFile(part.URL, file, headers) // 下载
 			if err == nil {
 				break
 			} else if i+1 >= downloader.option.RetryTimes {
@@ -543,27 +543,27 @@ func (downloader *Downloader) aria2(title string, stream *extractors.Stream) err
 
 // Download download urls
 func (downloader *Downloader) Download(data *extractors.Data) error {
-	if len(data.Streams) == 0 {
+	if len(data.Streams) == 0 { // URL 中未解析到任何资源
 		return errors.Errorf("no streams in title %s", data.Title)
 	}
 
-	sortedStreams := genSortedStreams(data.Streams)
-	if downloader.option.InfoOnly {
+	sortedStreams := genSortedStreams(data.Streams) // 按大小降序排列
+	if downloader.option.InfoOnly {                 // 只打印资源信息
 		printInfo(data, sortedStreams)
 		return nil
 	}
 
-	title := downloader.option.OutputName
+	title := downloader.option.OutputName // 输出的文件名
 	if title == "" {
 		title = data.Title
 	}
-	title = utils.FileName(title, "", downloader.option.FileNameLength)
+	title = utils.FileName(title, "", downloader.option.FileNameLength) // 根据系统生成文件路径
 
 	streamName := downloader.option.Stream
 	if streamName == "" {
 		streamName = sortedStreams[0].ID
 	}
-	stream, ok := data.Streams[streamName]
+	stream, ok := data.Streams[streamName] // 根据 ID 获取 stream，比如：720P 1080P 1440P 等
 	if !ok {
 		return errors.Errorf("no stream named %s", streamName)
 	}
@@ -573,7 +573,7 @@ func (downloader *Downloader) Download(data *extractors.Data) error {
 	}
 
 	// download caption
-	if downloader.option.Caption && data.Captions != nil {
+	if downloader.option.Caption && data.Captions != nil { // 下载字幕
 		fmt.Println("\nDownloading captions...")
 		for k, v := range data.Captions {
 			if v != nil {
@@ -603,15 +603,15 @@ func (downloader *Downloader) Download(data *extractors.Data) error {
 		return nil
 	}
 
-	downloader.bar = progressBar(stream.Size)
+	downloader.bar = progressBar(stream.Size) // 创建进度条
 	if !downloader.option.Silent {
-		downloader.bar.Start()
+		downloader.bar.Start() // 开始
 	}
-	if len(stream.Parts) == 1 {
+	if len(stream.Parts) == 1 { // 视频只有一个部分
 		// only one fragment
 		var err error
-		if downloader.option.MultiThread {
-			err = downloader.multiThreadSave(stream.Parts[0], data.URL, title)
+		if downloader.option.MultiThread { // 开启多线程
+			err = downloader.multiThreadSave(stream.Parts[0], data.URL, title) // 并发保存文件
 		} else {
 			err = downloader.save(stream.Parts[0], data.URL, title)
 		}
@@ -623,7 +623,9 @@ func (downloader *Downloader) Download(data *extractors.Data) error {
 		return nil
 	}
 
-	wgp := utils.NewWaitGroupPool(downloader.option.ThreadNumber)
+	// 分段视频采用多线程下载
+
+	wgp := utils.NewWaitGroupPool(downloader.option.ThreadNumber) // 创建协程池
 	// multiple fragments
 	errs := make([]error, 0)
 	lock := sync.Mutex{}
@@ -640,8 +642,12 @@ func (downloader *Downloader) Download(data *extractors.Data) error {
 		}
 		parts[index] = partFilePath
 
+		// 这里使用协程池
+		// 比如 有 100 个片段需要下载
+		// 但是协程上限为 10 个
+		// 那么 wgp.Add 就会阻塞，无法创建新协程
 		wgp.Add()
-		go func(part *extractors.Part, fileName string) {
+		go func(part *extractors.Part, fileName string) { // 并发下载
 			defer wgp.Done()
 			var err error
 			if downloader.option.MultiThread {
@@ -662,13 +668,16 @@ func (downloader *Downloader) Download(data *extractors.Data) error {
 	}
 	downloader.bar.Finish()
 
-	if data.Type != extractors.DataTypeVideo {
+	if data.Type != extractors.DataTypeVideo { // 不是视频，无需合并
 		return nil
 	}
 
 	if !downloader.option.Silent {
 		fmt.Printf("Merging video parts into %s\n", mergedFilePath)
 	}
+
+	// 使用 ffmpeg 合并视频
+
 	if stream.Ext != "mp4" || stream.NeedMux {
 		return utils.MergeFilesWithSameExtension(parts, mergedFilePath)
 	}

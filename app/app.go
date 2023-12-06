@@ -267,7 +267,7 @@ func New() *cli.App {
 }
 
 func download(c *cli.Context, videoURL string) error {
-	data, err := extractors.Extract(videoURL, extractors.Options{
+	data, err := extractors.Extract(videoURL, extractors.Options{ // 解析资源信息
 		Playlist:         c.Bool("playlist"),
 		Items:            c.String("items"),
 		ItemStart:        int(c.Uint("start")),
@@ -285,7 +285,7 @@ func download(c *cli.Context, videoURL string) error {
 		return err
 	}
 
-	if c.Bool("json") {
+	if c.Bool("json") { // 输出 JSON 格式 解析信息
 		e := json.NewEncoder(os.Stdout)
 		e.SetIndent("", "\t")
 		e.SetEscapeHTML(false)
@@ -316,18 +316,18 @@ func download(c *cli.Context, videoURL string) error {
 	})
 	errors := make([]error, 0)
 	for _, item := range data {
-		if item.Err != nil {
+		if item.Err != nil { // 不下载解析出错的资源
 			// if this error occurs, the preparation step is normal, but the data extraction is wrong.
 			// the data is an empty struct.
 			errors = append(errors, item.Err)
 			continue
 		}
-		if err = defaultDownloader.Download(item); err != nil {
+		if err = defaultDownloader.Download(item); err != nil { // 下载
 			errors = append(errors, err)
 		}
 	}
 	if len(errors) != 0 {
-		return errors[0]
+		return errors[0] // 这里不关心出现的什么错误？
 	}
 	return nil
 }
