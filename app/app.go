@@ -199,7 +199,7 @@ func New() *cli.App {
 			},
 		},
 		Action: func(c *cli.Context) error {
-			args := c.Args().Slice()
+			args := c.Args().Slice() // 获取命令行参数
 
 			if c.Bool("debug") {
 				cli.VersionPrinter(c)
@@ -233,17 +233,17 @@ func New() *cli.App {
 				}
 			}
 
-			request.SetOptions(request.Options{
-				RetryTimes: int(c.Uint("retry")),
+			request.SetOptions(request.Options{ // 请求选项
+				RetryTimes: int(c.Uint("retry")), // 重试次数
 				Cookie:     cookie,
-				UserAgent:  c.String("user-agent"),
+				UserAgent:  c.String("user-agent"), // 用户代理 ？
 				Refer:      c.String("refer"),
 				Debug:      c.Bool("debug"),
 				Silent:     c.Bool("silent"),
 			})
 
 			var isErr bool
-			for _, videoURL := range args {
+			for _, videoURL := range args { // 下载所有的 URL
 				if err := download(c, videoURL); err != nil {
 					fmt.Fprintf(
 						color.Output,
@@ -254,7 +254,7 @@ func New() *cli.App {
 					isErr = true
 				}
 			}
-			if isErr {
+			if isErr { // 出现错误，直接退出
 				return cli.Exit("", 1)
 			}
 			return nil

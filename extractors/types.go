@@ -2,9 +2,9 @@ package extractors
 
 // Part is the data structure for a single part of the video stream information.
 type Part struct {
-	URL  string `json:"url"`
-	Size int64  `json:"size"`
-	Ext  string `json:"ext"`
+	URL  string `json:"url"`  // 资源 URL
+	Size int64  `json:"size"` // 资源 大小
+	Ext  string `json:"ext"`  // 扩展名
 }
 
 type CaptionPart struct {
@@ -13,7 +13,7 @@ type CaptionPart struct {
 }
 
 // Stream is the data structure for each video stream, eg: 720P, 1080P.
-type Stream struct {
+type Stream struct { // 视频流
 	// eg: "1080"
 	ID string `json:"id"`
 	// eg: "1080P xxx"
@@ -21,13 +21,13 @@ type Stream struct {
 	// [Part: {URL, Size, Ext}, ...]
 	// Some video stream have multiple parts,
 	// and can also be used to download multiple image files at once
-	Parts []*Part `json:"parts"`
+	Parts []*Part `json:"parts"` // 资源的 多个部分
 	// total size of all urls
-	Size int64 `json:"size"`
+	Size int64 `json:"size"` // 资源 总大小
 	// the file extension after video parts merged
-	Ext string `json:"ext"`
+	Ext string `json:"ext"` // 合并后的 扩展名
 	// if the parts need mux
-	NeedMux bool
+	NeedMux bool // 是否需要 锁
 }
 
 // DataType indicates the type of extracted data, eg: video or image.
@@ -45,10 +45,10 @@ const (
 // Data is the main data structure for the whole video data.
 type Data struct {
 	// URL is used to record the address of this download
-	URL   string   `json:"url"`
-	Site  string   `json:"site"`
-	Title string   `json:"title"`
-	Type  DataType `json:"type"`
+	URL   string   `json:"url"`   // 资源 URL
+	Site  string   `json:"site"`  // 资源 网址
+	Title string   `json:"title"` // 资源 名称
+	Type  DataType `json:"type"`  // 资源 类型
 	// each stream has it's own Parts and Quality
 	Streams map[string]*Stream `json:"streams"`
 	// danmaku, subtitles, etc
