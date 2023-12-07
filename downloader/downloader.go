@@ -194,7 +194,7 @@ func (downloader *Downloader) save(part *extractors.Part, refer, fileName string
 				}
 				temp += written
 				headers["Range"] = fmt.Sprintf("bytes=%d-%d", temp, end)
-				time.Sleep(1 * time.Second)
+				time.Sleep(1 * time.Second) // 等 1s，为了防止请求过快?
 			}
 			start = end + 1
 		}
